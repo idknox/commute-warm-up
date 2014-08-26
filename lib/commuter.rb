@@ -1,5 +1,4 @@
 require "date"
-require "csv_to_hash_converter"
 
 class Commutes
   def initialize(commuters)

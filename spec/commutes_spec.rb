@@ -1,4 +1,5 @@
 require "spec_helper"
+require "csv_to_hash_converter"
 require "commuter"
 
 describe "Commutes" do
