@@ -40,21 +40,7 @@ class Commutes
     (total_time.to_f / commute_count).round(2)
   end
 
-
   def fastest_by_mode(mode, route)
-    speeds = []
-    fastest = fastest_commuter_by_mode(mode, route)
-    @commuters[fastest].each do |commute|
-      if commute["Mode"] == mode
-        speeds << (commute["Distance"].to_f / commute["Inbound"].to_f)
-      end
-    end
-    speeds.reduce(:+)/speeds.length
-  end
-
-  private
-
-  def fastest_commuter_by_mode(mode, route)
     commutes = []
     @commuters.each do |name, commute_data|
       commute_data.each do |day|
@@ -63,6 +49,17 @@ class Commutes
         end
       end
     end
-    commutes.uniq.sort_by! { |commute| commute.values }.first[0]
+    commutes.uniq.sort_by! { |commute| commute[1] }.first[0]
+  end
+
+  def average_of_fastest(mode, route)
+    speeds = []
+    fastest = fastest_commuter_by_mode(mode, route)
+    @commuters[fastest].each do |commute|
+      if commute["Mode"] == mode
+        speeds << (commute["Distance"].to_f / commute[route].to_f)
+      end
+    end
+    speeds.reduce(:+)/speeds.length
   end
 end
