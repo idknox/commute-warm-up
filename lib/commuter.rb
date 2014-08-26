@@ -37,7 +37,7 @@ class Commutes
         commute_count += 2
       end
     end
-    total_time.to_f / commute_count
+    (total_time.to_f / commute_count).round(2)
   end
 
 
