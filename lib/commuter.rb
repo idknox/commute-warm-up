@@ -2,11 +2,6 @@ require "csv"
 require "pp"
 require "date"
 
-def nate_wed_inbound(name, day)
-  if name == "Nate" && day["Week"] == "4" && day["Day"] == "Wednesday"
-    puts "Nate's Wed Inbound: " + day["Inbound"]
-  end
-end
 
 commuters = {}
 ordered_weekdays = Date::DAYNAMES
@@ -20,10 +15,17 @@ CSV.foreach("./data/gschool_commute_data.csv", :headers => true) do |row|
   end
 end
 
+# SORT HASH
 commuters.values.each do |commuter_data|
   commuter_data.each { |commute| commute["Weekday"] = ordered_weekdays.index(commute["Day"]) }
   commuter_data.sort_by! { |commute| [commute["Week"], commute["Weekday"]] }
   commuter_data.each { |commute| commute.delete("Weekday") }
+end
+
+def nate_wed_inbound(name, day)
+  if name == "Nate" && day["Week"] == "4" && day["Day"] == "Wednesday"
+    puts "Nate's Wed Inbound: " + day["Inbound"]
+  end
 end
 
 commuters.each do |name, commutes|
@@ -32,6 +34,7 @@ commuters.each do |name, commutes|
   end
 end
 
+# AVERAGE COMMUTE
 total_time = 0
 commute_count = 0
 commuters.values.each do |commutes|
@@ -43,6 +46,7 @@ end
 
 puts "Average Commute: " + (total_time.to_f / commute_count).to_s
 
+# FASTEST WALKER
 walks = []
 commuters.each do |name, commutes|
   commutes.each do |day|
