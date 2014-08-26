@@ -1,68 +1,68 @@
-require "csv"
 require "date"
+require "csv_to_hash_converter"
 
-
-commuters = {}
-
-CSV.foreach("./data/gschool_commute_data.csv", :headers => true) do |row|
-  if commuters.keys.include?(row.fields[0])
-    commuters[row.fields[0]] << Hash[row.headers[1..-1].zip(row.fields[1..-1])]
-  else
-    commuters[row.fields[0]] = []
-    commuters[row.fields[0]] << Hash[row.headers[1..-1].zip(row.fields[1..-1])]
+class Commutes
+  def initialize(commuters)
+    @commuters = commuters
   end
-end
 
-# SORT HASH
-ordered_weekdays = Date::DAYNAMES
-commuters.values.each do |commuter_data|
-  commuter_data.each { |commute| commute["Weekday"] = ordered_weekdays.index(commute["Day"]) }
-  commuter_data.sort_by! { |commute| [commute["Week"], commute["Weekday"]] }
-  commuter_data.each { |commute| commute.delete("Weekday") }
-end
-
-def nate_wed_inbound(name, day)
-  if name == "Nate" && day["Week"] == "4" && day["Day"] == "Wednesday"
-    puts "Nate's Wed Inbound: #{day["Inbound"]}"
-  end
-end
-
-commuters.each do |name, commutes|
-  commutes.each do |day|
-    nate_wed_inbound(name, day)
-  end
-end
-
-# AVERAGE COMMUTE
-total_time = 0
-commute_count = 0
-commuters.values.each do |commutes|
-  commutes.each do |day|
-    total_time += (day["Inbound"].to_i + day["Outbound"].to_i)
-    commute_count += 2
-  end
-end
-
-puts "Average Commute: #{(total_time.to_f / commute_count).to_s}"
-
-# FASTEST WALKER
-walks = []
-commuters.each do |name, commutes|
-  commutes.each do |day|
-    if day["Mode"] == "Walk"
-      walks << {name => day["Inbound"]}
+  def sort_by_week_and_weekday
+    ordered_weekdays = Date::DAYNAMES
+    @commuters.values.map do |commuter_data|
+      commuter_data.each { |commute| commute["Weekday"] = ordered_weekdays.index(commute["Day"]) }
+      commuter_data.sort_by! { |commute| [commute["Week"], commute["Weekday"]] }
+      commuter_data.each { |commute| commute.delete("Weekday") }
     end
+    self
+  end
+
+  def find_commute_time(commuter, week, weekday, route)
+    output = []
+    @commuters.each do |name, commutes|
+      commutes.each do |day|
+        if name == commuter && day["Week"] == week && day["Day"] == weekday
+          output << day[route]
+        end
+      end
+    end
+    output.first.to_i
+  end
+
+  def average_commute
+    total_time = 0
+    commute_count = 0
+    @commuters.values.each do |commutes|
+      commutes.each do |day|
+        total_time += (day["Inbound"].to_i + day["Outbound"].to_i)
+        commute_count += 2
+      end
+    end
+    total_time.to_f / commute_count
+  end
+
+
+  def fastest_by_mode(mode, route)
+    speeds = []
+    fastest = fastest_commuter_by_mode(mode, route)
+    @commuters[fastest].each do |commute|
+      if commute["Mode"] == mode
+        speeds << (commute["Distance"].to_f / commute["Inbound"].to_f)
+      end
+    end
+    speeds.reduce(:+)/speeds.length
+  end
+
+  private
+
+  def fastest_commuter_by_mode(mode, route)
+    commutes = []
+    @commuters.each do |name, commute_data|
+      commute_data.each do |day|
+        if day["Mode"] == mode
+          commutes << [name, day[route]]
+        end
+      end
+    end
+    commutes.uniq.sort_by! { |commute| commute.values }.first[0]
   end
 end
-
-fastest_walker = walks.uniq.sort_by! {|walk| walk.values }.first
-puts "Fastest Walker: #{fastest_walker.keys[0]} - #{fastest_walker.values[0]}"
-
-speeds = []
-commuters["Emily"].each do |commute|
-  if commute["Mode"] == "Walk"
-    speeds << (commute["Distance"].to_f / commute["Inbound"].to_f)
-  end
-end
-
-puts "Emily's average speed: #{speeds.reduce(:+)/speeds.length}"
