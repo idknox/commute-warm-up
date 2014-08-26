@@ -52,14 +52,13 @@ class Commutes
     commutes.uniq.sort_by! { |commute| commute[1] }.first[0]
   end
 
-  def average_of_fastest(mode, route)
+  def average_of_fastest(fastest, mode, route)
     speeds = []
-    fastest = fastest_commuter_by_mode(mode, route)
     @commuters[fastest].each do |commute|
       if commute["Mode"] == mode
         speeds << (commute["Distance"].to_f / commute[route].to_f)
       end
     end
-    speeds.reduce(:+)/speeds.length
+    (speeds.reduce(:+)/speeds.length).round(3)
   end
 end
